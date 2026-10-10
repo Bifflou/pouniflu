@@ -1,0 +1,946 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mots mêlés Pouniflu</title>
+<meta name="description" content="Une grille de mots mêlés chronométrée : chaque grille terminée débloque un indice.">
+<meta name="theme-color" content="#f8fafd">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%23fff'/%3E%3Cpath d='M8 23 24 9' stroke='%23ffe838' stroke-width='10' stroke-linecap='round'/%3E%3Ctext x='16' y='22' font-family='monospace' font-weight='700' font-size='17' text-anchor='middle' fill='%231a2b6d'%3EM%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&family=Caveat:wght@600&family=Martian+Mono:wght@400..700&display=swap">
+<style>
+  :root {
+    /* Une page de cahier à petits carreaux : la grille à gauche, la marge rouge à droite
+       pour les mots et les indices. La seule couleur vient des surligneurs fluo. */
+    --papier: #f8fafd;
+    --carreau: #e4ebf7;
+    --feuille: #ffffff;
+    --ligne: #c5d3ee;
+    --encre: #1a2b6d;
+    --encre-douce: #5d6b96;
+    --rouge: #e03149;
+    --fluo-1: #ffe838;
+    --fluo-2: #ff93c9;
+    --fluo-3: #9df06e;
+    --fluo-4: #ffba5e;
+    --fluo-5: #84dbff;
+    --fluo-6: #d0b3ff;
+    --titre: "Bricolage Grotesque", "Trebuchet MS", "Segoe UI", sans-serif;
+    --mono: "Martian Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+    --main: "Caveat", "Segoe Print", "Bradley Hand", cursive;
+    --gouttiere: clamp(16px, 4vw, 40px);
+    color-scheme: light;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0;
+    background-color: var(--papier);
+    background-image:
+      linear-gradient(var(--carreau) 1px, transparent 1px),
+      linear-gradient(90deg, var(--carreau) 1px, transparent 1px);
+    background-size: 26px 26px;
+    color: var(--encre);
+    font-family: var(--titre);
+    font-size: 1rem;
+    line-height: 1.5;
+  }
+
+  h1, h2, p, ul, ol { margin: 0; }
+  ul, ol { padding: 0; list-style: none; }
+
+  .page {
+    max-width: 1080px;
+    margin-inline: auto;
+    padding-inline: var(--gouttiere);
+    padding-block: clamp(20px, 4vw, 40px) 64px;
+  }
+
+  /* En-tête */
+  .entete { display: flex; flex-direction: column; gap: 10px; }
+  .surtitre {
+    font-family: var(--mono);
+    font-size: .68rem;
+    font-weight: 500;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--encre-douce);
+  }
+  h1 {
+    font-weight: 800;
+    font-size: clamp(2.4rem, 8vw, 4.4rem);
+    line-height: .95;
+    letter-spacing: -.035em;
+    text-wrap: balance;
+  }
+  h1 .fluo {
+    background: linear-gradient(transparent 14%, var(--fluo-1) 14% 90%, transparent 90%);
+    padding-inline: .1em;
+    margin-inline: -.1em;
+  }
+  .consigne { max-width: 56ch; }
+
+  /* Une colonne sur téléphone ; sur grand écran, la grille à gauche et tout le reste dans la marge */
+  .plan {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 24px;
+  }
+  .colonne-grille { --cote: 640px; min-width: 0; display: flex; flex-direction: column; gap: 12px; }
+  .marge { min-width: 0; display: flex; flex-direction: column; gap: 32px; }
+
+  /* Barre de jeu : chrono, compteur, sélection en cours */
+  .barre {
+    display: grid;
+    grid-template-columns: auto auto minmax(0, 1fr);
+    column-gap: 24px;
+    row-gap: 8px;
+    align-items: end;
+    max-width: var(--cote);
+  }
+  .stat { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+  .etiquette {
+    font-family: var(--mono);
+    font-size: .62rem;
+    font-weight: 500;
+    line-height: 1;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--encre-douce);
+  }
+  .valeur {
+    font-family: var(--mono);
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    line-height: 1;
+    white-space: nowrap;
+  }
+  .valeur-chrono { font-size: 1.9rem; font-weight: 700; }
+  .valeur-compte { font-size: 1.15rem; padding-bottom: 2px; }
+  .valeur-lecture {
+    font-size: .8rem;
+    letter-spacing: .08em;
+    padding-bottom: 4px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .jauge {
+    grid-column: 1 / -1;
+    height: 4px;
+    border-radius: 2px;
+    background: var(--ligne);
+    overflow: hidden;
+  }
+  .jauge i {
+    display: block;
+    height: 100%;
+    background: var(--encre);
+    transform-origin: left;
+    transform: scaleX(var(--reste, 1));
+    transition: transform .2s linear;
+  }
+  .barre.urgent .valeur-chrono { color: var(--rouge); }
+  .barre.urgent .jauge i { background: var(--rouge); }
+
+  /* La grille */
+  .cadre {
+    position: relative;
+    width: 100%;
+    max-width: var(--cote);
+    container-type: inline-size;
+  }
+  .grille {
+    position: relative;
+    isolation: isolate;
+    display: grid;
+    grid-template-columns: repeat(var(--n, 15), 1fr);
+    aspect-ratio: 1;
+    background: var(--feuille);
+    border: 2px solid var(--encre);
+    border-radius: 4px;
+    overflow: hidden;
+    cursor: crosshair;
+    touch-action: none;
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .grille:focus-visible { outline: 3px solid var(--encre); outline-offset: 3px; }
+  .case {
+    display: grid;
+    place-items: center;
+    border-right: 1px solid var(--ligne);
+    border-bottom: 1px solid var(--ligne);
+    font-family: var(--mono);
+    font-weight: 600;
+    font-size: clamp(12px, 3.6vw, 24px);
+    font-size: 4cqi;
+    line-height: 1;
+  }
+  .grille:focus-visible .case.curseur { outline: 2px solid var(--encre); outline-offset: -3px; border-radius: 4px; }
+
+  .calque {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    mix-blend-mode: multiply;
+  }
+  .calque line { fill: none; stroke-width: .78; stroke-linecap: round; }
+  .trait { stroke-dasharray: 1; animation: tracer .3s ease-out; }
+  .selection { stroke: #bcc8ea; display: none; }
+  .selection.visible { display: inline; }
+  .selection.ratee { stroke: #f3a9b3; animation: effacer .45s ease-in forwards; }
+  @keyframes tracer { from { stroke-dashoffset: 1; } }
+  @keyframes effacer { 60% { opacity: 1; } to { opacity: 0; } }
+
+  /* Fiche de départ, posée sur la grille vide */
+  .depart {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    padding: 16px;
+  }
+  .fiche {
+    width: min(100%, 330px);
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+    padding: clamp(18px, 5cqi, 28px);
+    background: var(--papier);
+    border: 2px solid var(--encre);
+    border-radius: 4px;
+    transform: rotate(-1.2deg);
+  }
+  .fiche-titre {
+    font-weight: 800;
+    font-size: clamp(1.5rem, 7cqi, 2.1rem);
+    line-height: 1;
+    letter-spacing: -.02em;
+    text-wrap: balance;
+  }
+  .fiche .bouton { margin-top: 6px; }
+
+  /* Boutons */
+  button { font: inherit; color: inherit; cursor: pointer; }
+  .bouton {
+    padding: 12px 22px;
+    border: 2px solid var(--encre);
+    border-radius: 6px;
+    background: var(--encre);
+    color: var(--feuille);
+    font-weight: 700;
+    font-size: 1.05rem;
+    line-height: 1.1;
+  }
+  .bouton:hover { background: var(--fluo-1); color: var(--encre); }
+  .lien {
+    padding: 4px 0;
+    border: 0;
+    background: none;
+    font-weight: 600;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+  .lien:hover { text-decoration-thickness: 2px; }
+  button:focus-visible { outline: 3px solid var(--encre); outline-offset: 3px; }
+  .bouton:focus-visible { outline-color: var(--rouge); }
+
+  /* La marge : mots et indices */
+  .bloc { display: flex; flex-direction: column; gap: 12px; }
+  .bloc-tete { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+  h2 { font-weight: 800; font-size: 1.35rem; line-height: 1.1; letter-spacing: -.01em; }
+  .bloc-tete .surtitre { font-variant-numeric: tabular-nums; }
+
+  .liste-mots { display: flex; flex-wrap: wrap; gap: 6px 18px; }
+  .liste-mots li { font-weight: 600; font-size: 1.02rem; line-height: 1.3; }
+  .liste-mots span { padding: 1px 5px; margin-inline: -5px; border-radius: 3px; }
+  .liste-mots .trouve span {
+    background: var(--c);
+    text-decoration: line-through;
+    text-decoration-thickness: 1.5px;
+  }
+  .note { font-size: .86rem; color: var(--encre-douce); }
+
+  .liste-indices { display: flex; flex-direction: column; counter-reset: indice; }
+  .liste-indices li {
+    counter-increment: indice;
+    display: grid;
+    grid-template-columns: 2ch minmax(0, 1fr);
+    column-gap: 12px;
+    align-items: baseline;
+    min-height: 44px;
+    padding-block: 8px 6px;
+    border-bottom: 1px solid var(--ligne);
+  }
+  .liste-indices li::before {
+    content: counter(indice);
+    font-family: var(--mono);
+    font-size: .72rem;
+    font-weight: 600;
+    color: var(--encre-douce);
+  }
+  .indice-texte {
+    justify-self: start;
+    font-family: var(--main);
+    font-weight: 600;
+    font-size: 1.7rem;
+    line-height: 1.05;
+    padding-inline: 6px;
+    margin-inline: -6px;
+    background: linear-gradient(transparent 22%, var(--fluo-1) 22% 88%, transparent 88%);
+  }
+  .verrou {
+    font-family: var(--mono);
+    font-size: .68rem;
+    font-weight: 500;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: var(--encre-douce);
+  }
+  .raz { font-size: .86rem; color: var(--encre-douce); display: flex; flex-wrap: wrap; gap: 4px 14px; align-items: baseline; }
+  .raz .lien { font-weight: 500; }
+
+  /* Bilan de fin de grille */
+  dialog {
+    width: min(430px, calc(100vw - 32px));
+    padding: clamp(22px, 5vw, 32px);
+    border: 2px solid var(--encre);
+    border-radius: 6px;
+    background: var(--feuille);
+    color: var(--encre);
+    box-shadow: 0 18px 50px rgba(26, 43, 109, .28);
+  }
+  dialog::backdrop { background: rgba(26, 43, 109, .42); }
+  dialog[open] { display: flex; flex-direction: column; gap: 12px; animation: poser .3s ease-out; }
+  dialog h2 { font-size: clamp(1.7rem, 6vw, 2.2rem); letter-spacing: -.02em; text-wrap: balance; }
+  .indice-gagne {
+    align-self: flex-start;
+    font-family: var(--main);
+    font-weight: 600;
+    font-size: clamp(2.2rem, 9vw, 3rem);
+    line-height: 1.05;
+    padding-inline: 10px;
+    margin-inline: -10px;
+    background: linear-gradient(transparent 20%, var(--fluo-1) 20% 88%, transparent 88%);
+  }
+  .actions { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 22px; margin-top: 8px; }
+  @keyframes poser { from { opacity: 0; transform: translateY(10px) rotate(-.6deg); } }
+
+  @media (max-width: 899px) {
+    .barre {
+      position: sticky;
+      top: 0;
+      z-index: 2;
+      max-width: none;
+      margin-inline: calc(-1 * var(--gouttiere));
+      padding: 10px var(--gouttiere) 12px;
+      background: var(--papier);
+      border-bottom: 1px solid var(--ligne);
+    }
+    .cadre { margin-inline: auto; }
+  }
+
+  @media (min-width: 900px) {
+    .plan { grid-template-columns: minmax(0, 1fr) 320px; grid-template-rows: auto 1fr; gap: 0 40px; }
+    /* La grille tient en entier dans la hauteur de la fenêtre : pas de défilement pendant le chrono. */
+    .colonne-grille {
+      grid-column: 1;
+      grid-row: 1 / span 2;
+      --cote: clamp(420px, calc(100vh - 150px), 640px);
+      --cote: clamp(420px, calc(100dvh - 150px), 640px);
+    }
+    .entete, .marge { grid-column: 2; border-left: 2px solid var(--rouge); padding-left: 28px; }
+    .entete { grid-row: 1; padding-bottom: 32px; }
+    .marge { grid-row: 2; }
+    h1 { font-size: 4rem; }
+    .liste-mots { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="plan">
+
+    <header class="entete">
+      <p class="surtitre">Cahier de jeux</p>
+      <h1>Mots <span class="fluo">mêlés</span></h1>
+      <p class="consigne">Les mots se cachent dans tous les sens : à l'endroit, à l'envers, en diagonale. Finis la grille avant la fin du chrono et tu gagnes un indice.</p>
+    </header>
+
+    <section class="colonne-grille" aria-label="Grille">
+      <div class="barre" id="barre">
+        <div class="stat">
+          <span class="etiquette">Chrono</span>
+          <span class="valeur valeur-chrono" id="chrono" role="timer">7:00</span>
+        </div>
+        <div class="stat">
+          <span class="etiquette">Trouvés</span>
+          <span class="valeur valeur-compte" id="compte">0/19</span>
+        </div>
+        <div class="stat">
+          <span class="etiquette">Sélection</span>
+          <output class="valeur valeur-lecture" id="lecture">—</output>
+        </div>
+        <div class="jauge" aria-hidden="true"><i id="jauge"></i></div>
+      </div>
+
+      <div class="cadre">
+        <div class="grille" id="grille" tabindex="0" role="application"
+             aria-label="Grille de mots mêlés. Flèches pour se déplacer, Entrée pour poser le début puis la fin d'un mot.">
+          <svg class="calque" id="calque" aria-hidden="true">
+            <g id="traits"></g>
+            <line class="selection" id="selection" x1="0" y1="0" x2="0" y2="0"></line>
+          </svg>
+        </div>
+        <div class="depart" id="depart">
+          <div class="fiche">
+            <p class="surtitre" id="depart-surtitre">Grille 1 sur 7</p>
+            <p class="fiche-titre" id="depart-titre">19 mots, 7 minutes</p>
+            <p id="depart-texte">Le chrono part dès que les lettres s'affichent.</p>
+            <button class="bouton" id="commencer" type="button">Commencer</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <aside class="marge">
+      <section class="bloc">
+        <div class="bloc-tete">
+          <h2>Les mots</h2>
+        </div>
+        <ul class="liste-mots" id="liste-mots"></ul>
+        <p class="note">Dans la grille, ni espace ni accent : Miss France s'écrit MISSFRANCE.</p>
+      </section>
+
+      <section class="bloc">
+        <div class="bloc-tete">
+          <h2>Les indices</h2>
+          <span class="surtitre" id="compte-indices">0/7</span>
+        </div>
+        <ol class="liste-indices" id="liste-indices"></ol>
+        <div class="raz">
+          <button class="lien" id="raz" type="button">Tout remettre à zéro</button>
+          <span id="raz-question" hidden>Effacer les indices débloqués ?</span>
+          <button class="lien" id="raz-oui" type="button" hidden>Oui, effacer</button>
+          <button class="lien" id="raz-non" type="button" hidden>Annuler</button>
+        </div>
+      </section>
+    </aside>
+
+  </div>
+</div>
+
+<dialog id="bilan" aria-labelledby="bilan-titre">
+  <p class="surtitre" id="bilan-surtitre"></p>
+  <h2 id="bilan-titre"></h2>
+  <p class="indice-gagne" id="bilan-indice" hidden></p>
+  <p id="bilan-texte"></p>
+  <div class="actions">
+    <button class="bouton" id="bilan-suite" type="button"></button>
+    <button class="lien" id="bilan-pause" type="button"></button>
+  </div>
+</dialog>
+
+<script>
+'use strict';
+
+/* ---------- Réglages ---------- */
+
+const MOTS = [
+  'Martini', 'LDV', 'Esport', 'Pouniflu', 'Ominga', 'Arthur', 'Quentin',
+  'Bifflou', 'Miss France', 'Mamie', 'Ta gueule', 'Monsieur J', 'Lady Bug',
+  'Chat noir', 'Poupou', 'Overwatch', 'Bapbap', 'Garrysmod', 'Ça tourne',
+];
+
+// Un indice par grille terminée, dans cet ordre.
+const INDICES = [
+  'team salé',
+  'Martini ?',
+  'douceur rêvé',
+  'Pluie ou beau temps',
+  'usé par le temps',
+  'héros mystère',
+  'pioupiou',
+];
+
+const TAILLE = 15;        // grille de 15 × 15
+const DUREE = 7 * 60;     // chrono, en secondes
+const CLE_SAUVEGARDE = 'pouniflu-mots-meles';
+
+/* ---------- Fabrication de la grille ---------- */
+
+// Rangées dans l'ordre des huit octants, pour aligner() plus bas.
+const DIRECTIONS = [[0, 1], [1, 1], [1, 0], [1, -1], [0, -1], [-1, -1], [-1, 0], [-1, 1]];
+
+// « Ça tourne » → CATOURNE
+const enLettres = mot => mot.normalize('NFD').replace(/[^A-Za-z]/g, '').toUpperCase();
+const CLES = MOTS.map(enLettres);
+// Les cases vides sont remplies avec les lettres des mots eux-mêmes : plus de fausses pistes.
+const RESERVE = CLES.join('');
+
+const hasard = n => Math.floor(Math.random() * n);
+
+function melanger(t) {
+  for (let i = t.length - 1; i > 0; i--) {
+    const j = hasard(i + 1);
+    [t[i], t[j]] = [t[j], t[i]];
+  }
+  return t;
+}
+
+// g note, pour chaque case, le numéro du mot qui l'occupe. Deux mots ne partagent jamais
+// une lettre, et deux diagonales ne se croisent pas non plus entre quatre cases.
+function estLibre(g, n, l, c, dl, dc) {
+  for (let k = 0; k < n; k++) {
+    if (g[l + dl * k][c + dc * k] !== null) return false;
+    if (dl && dc && k < n - 1) {
+      const a = g[l + dl * k][c + dc * (k + 1)], b = g[l + dl * (k + 1)][c + dc * k];
+      if (a !== null && a === b) return false;
+    }
+  }
+  return true;
+}
+
+function emplacementsLibres(g, n, dl, dc) {
+  const libres = [];
+  for (let l = 0; l < TAILLE; l++) {
+    for (let c = 0; c < TAILLE; c++) {
+      const lf = l + dl * (n - 1), cf = c + dc * (n - 1);
+      if (lf < 0 || lf >= TAILLE || cf < 0 || cf >= TAILLE) continue;
+      if (estLibre(g, n, l, c, dl, dc)) libres.push([l, c]);
+    }
+  }
+  return libres;
+}
+
+function placer(g, i) {
+  const n = CLES[i].length;
+  for (const [dl, dc] of melanger(DIRECTIONS.slice())) {
+    const libres = emplacementsLibres(g, n, dl, dc);
+    if (!libres.length) continue;
+    const [l, c] = libres[hasard(libres.length)];
+    for (let k = 0; k < n; k++) g[l + dl * k][c + dc * k] = i;
+    return { l, c, dl, dc, n };
+  }
+  return null;
+}
+
+function occurrences(g, mot) {
+  let total = 0;
+  for (let l = 0; l < TAILLE; l++) {
+    for (let c = 0; c < TAILLE; c++) {
+      if (g[l][c] !== mot[0]) continue;
+      for (const [dl, dc] of DIRECTIONS) {
+        let k = 1;
+        while (k < mot.length && g[l + dl * k]?.[c + dc * k] === mot[k]) k++;
+        if (k === mot.length) total++;
+      }
+    }
+  }
+  return total;
+}
+
+function genererGrille() {
+  for (let essai = 0; essai < 5000; essai++) {
+    const g = Array.from({ length: TAILLE }, () => Array(TAILLE).fill(null));
+    const places = [];
+    // Les plus longs d'abord : ce sont les plus durs à caser.
+    const ordre = melanger(CLES.map((_, i) => i)).sort((a, b) => CLES[b].length - CLES[a].length);
+    let complet = true;
+    for (const i of ordre) {
+      const place = placer(g, i);
+      if (!place) { complet = false; break; }
+      places[i] = place;
+    }
+    if (!complet) continue;
+    const poses = g.map(ligne => ligne.map(() => null));
+    places.forEach((p, i) => {
+      for (let k = 0; k < p.n; k++) poses[p.l + p.dl * k][p.c + p.dc * k] = CLES[i][k];
+    });
+    // Le remplissage ne doit pas faire apparaître un mot une deuxième fois par hasard.
+    for (let tirage = 0; tirage < 25; tirage++) {
+      const lettres = poses.map(ligne => ligne.map(x => x ?? RESERVE[hasard(RESERVE.length)]));
+      if (CLES.every(mot => occurrences(lettres, mot) === 1)) return { lettres, places };
+    }
+  }
+  throw new Error('Impossible de fabriquer la grille');
+}
+
+/* ---------- Sauvegarde ---------- */
+
+function lireProgres() {
+  try {
+    const s = JSON.parse(localStorage.getItem(CLE_SAUVEGARDE));
+    if (s && Number.isInteger(s.debloques)) {
+      return {
+        debloques: Math.min(Math.max(s.debloques, 0), INDICES.length),
+        record: Number.isFinite(s.record) ? s.record : null,
+      };
+    }
+  } catch {}
+  return { debloques: 0, record: null };
+}
+
+function ecrireProgres() {
+  try { localStorage.setItem(CLE_SAUVEGARDE, JSON.stringify(progres)); } catch {}
+}
+
+/* ---------- Page ---------- */
+
+const $ = id => document.getElementById(id);
+const grille = $('grille'), calque = $('calque'), traits = $('traits'), selection = $('selection');
+const barre = $('barre'), chrono = $('chrono'), jauge = $('jauge'), compte = $('compte'), lecture = $('lecture');
+const depart = $('depart'), listeMots = $('liste-mots'), listeIndices = $('liste-indices');
+const bilan = $('bilan');
+
+const NB_COULEURS = 6;
+const SVG = 'http://www.w3.org/2000/svg';
+
+let progres = lireProgres();
+let phase = 'attente';            // attente | jeu | fini
+let partie = null;                // { lettres, places, trouves, fin, minuterie }
+let ancre = null;                 // début de mot posé d'un appui ou au clavier
+let glisse = null;                // sélection en cours à la souris ou au doigt
+let curseur = { l: TAILLE >> 1, c: TAILLE >> 1 };
+
+const cases = [];
+grille.style.setProperty('--n', TAILLE);
+calque.setAttribute('viewBox', `0 0 ${TAILLE} ${TAILLE}`);
+for (let i = 0; i < TAILLE * TAILLE; i++) {
+  const el = document.createElement('span');
+  el.className = 'case';
+  grille.insertBefore(el, calque);
+  cases.push(el);
+}
+
+for (const mot of MOTS) {
+  const li = document.createElement('li');
+  const span = document.createElement('span');
+  span.textContent = mot;
+  li.append(span);
+  listeMots.append(li);
+}
+
+const duree = s => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
+const pluriel = (n, mot) => `${n} ${mot}${n > 1 ? 's' : ''}`;
+
+function afficherChrono(ms) {
+  chrono.textContent = duree(Math.ceil(ms / 1000));
+  jauge.style.setProperty('--reste', ms / (DUREE * 1000));
+  barre.classList.toggle('urgent', phase === 'jeu' && ms <= 60000);
+}
+
+function afficherCompte() {
+  compte.textContent = `${partie ? partie.trouves.size : 0}/${MOTS.length}`;
+}
+
+function afficherIndices() {
+  $('compte-indices').textContent = `${progres.debloques}/${INDICES.length}`;
+  listeIndices.replaceChildren(...INDICES.map((texte, i) => {
+    const li = document.createElement('li');
+    const span = document.createElement('span');
+    if (i < progres.debloques) {
+      span.className = 'indice-texte';
+      span.textContent = texte;
+    } else {
+      span.className = 'verrou';
+      span.textContent = i === progres.debloques ? 'Prochaine grille finie' : 'Verrouillé';
+    }
+    li.append(span);
+    return li;
+  }));
+}
+
+function afficherDepart() {
+  const tout = progres.debloques >= INDICES.length;
+  $('depart-surtitre').textContent = tout
+    ? `Les ${INDICES.length} indices sont à toi`
+    : `Grille ${progres.debloques + 1} sur ${INDICES.length}`;
+  $('depart-titre').textContent = `${pluriel(MOTS.length, 'mot')}, ${pluriel(DUREE / 60, 'minute')}`;
+  $('depart-texte').textContent = progres.record === null
+    ? "Le chrono part dès que les lettres s'affichent."
+    : `Ton meilleur temps : ${duree(Math.round(progres.record / 1000))}. Le chrono part dès que les lettres s'affichent.`;
+  $('commencer').textContent = tout ? 'Rejouer' : 'Commencer';
+}
+
+function viderGrille() {
+  traits.replaceChildren();
+  effacerSelection();
+  for (const li of listeMots.children) {
+    li.classList.remove('trouve');
+    li.style.removeProperty('--c');
+  }
+}
+
+function attendre() {
+  phase = 'attente';
+  partie = null;
+  viderGrille();
+  for (const el of cases) el.textContent = '';
+  afficherChrono(DUREE * 1000);
+  afficherCompte();
+  afficherDepart();
+  depart.hidden = false;
+}
+
+function demarrer() {
+  const { lettres, places } = genererGrille();
+  partie = { lettres, places, trouves: new Set(), fin: Date.now() + DUREE * 1000 };
+  viderGrille();
+  cases.forEach((el, i) => { el.textContent = lettres[Math.floor(i / TAILLE)][i % TAILLE]; });
+  phase = 'jeu';
+  depart.hidden = true;
+  afficherCompte();
+  battre();
+  partie.minuterie = setInterval(battre, 200);
+}
+
+function battre() {
+  const reste = Math.max(0, partie.fin - Date.now());
+  afficherChrono(reste);
+  if (reste <= 0) terminer(false);
+}
+
+function terminer(gagne) {
+  clearInterval(partie.minuterie);
+  phase = 'fini';
+  glisse = null;
+  barre.classList.remove('urgent');
+  const indice = $('bilan-indice');
+  indice.hidden = true;
+
+  if (!gagne) {
+    effacerSelection();
+    const manquants = MOTS.filter((_, i) => !partie.trouves.has(i));
+    $('bilan-surtitre').textContent = 'Temps écoulé';
+    $('bilan-titre').textContent = `Il manquait ${pluriel(manquants.length, 'mot')}`;
+    $('bilan-texte').textContent = `Pas trouvé : ${manquants.join(', ')}. Pas d'indice cette fois, et la prochaine grille sera mélangée autrement.`;
+    $('bilan-suite').textContent = 'Réessayer';
+    $('bilan-pause').textContent = 'Faire une pause';
+    bilan.showModal();
+    return;
+  }
+
+  const temps = DUREE * 1000 - Math.max(0, partie.fin - Date.now());
+  const nouveau = progres.debloques < INDICES.length;
+  if (nouveau) progres.debloques++;
+  if (progres.record === null || temps < progres.record) progres.record = temps;
+  ecrireProgres();
+  afficherIndices();
+
+  const restantes = INDICES.length - progres.debloques;
+  $('bilan-surtitre').textContent = `Grille finie en ${duree(Math.round(temps / 1000))}`;
+  if (nouveau) {
+    $('bilan-titre').textContent = `Indice n° ${progres.debloques}`;
+    indice.textContent = INDICES[progres.debloques - 1];
+    indice.hidden = false;
+    $('bilan-texte').textContent = restantes
+      ? `Encore ${pluriel(restantes, 'grille')} pour tout débloquer.`
+      : `C'était le dernier. Les ${INDICES.length} indices sont à toi.`;
+  } else {
+    $('bilan-titre').textContent = 'Encore gagné';
+    $('bilan-texte').textContent = `Tu as déjà tous les indices. Ton meilleur temps : ${duree(Math.round(progres.record / 1000))}.`;
+  }
+  $('bilan-suite').textContent = restantes ? 'Grille suivante' : 'Rejouer';
+  $('bilan-pause').textContent = restantes ? 'Faire une pause' : 'Voir mes indices';
+  // Laisse le dernier coup de surligneur se tracer avant d'ouvrir le bilan.
+  setTimeout(() => bilan.showModal(), 450);
+}
+
+/* ---------- Sélection dans la grille ---------- */
+
+const borne = x => Math.min(TAILLE - 1, Math.max(0, x));
+const memeCase = (a, b) => a.l === b.l && a.c === b.c;
+
+function caseSous(e) {
+  const r = grille.getBoundingClientRect();
+  const x = (e.clientX - r.left - grille.clientLeft) / grille.clientWidth;
+  const y = (e.clientY - r.top - grille.clientTop) / grille.clientHeight;
+  return { l: borne(Math.floor(y * TAILLE)), c: borne(Math.floor(x * TAILLE)) };
+}
+
+// Ramène la case visée sur la ligne, colonne ou diagonale la plus proche de a.
+function aligner(a, b) {
+  const dl = b.l - a.l, dc = b.c - a.c;
+  if (!dl && !dc) return { ...a };
+  const [pl, pc] = DIRECTIONS[(Math.round(Math.atan2(dl, dc) / (Math.PI / 4)) + 8) % 8];
+  let n = Math.max(Math.abs(dl), Math.abs(dc));
+  while (borne(a.l + pl * n) !== a.l + pl * n || borne(a.c + pc * n) !== a.c + pc * n) n--;
+  return { l: a.l + pl * n, c: a.c + pc * n };
+}
+
+function lettresEntre(a, b) {
+  const n = Math.max(Math.abs(b.l - a.l), Math.abs(b.c - a.c));
+  const pl = Math.sign(b.l - a.l), pc = Math.sign(b.c - a.c);
+  let texte = '';
+  for (let k = 0; k <= n; k++) texte += partie.lettres[a.l + pl * k][a.c + pc * k];
+  return texte;
+}
+
+function tracer(ligne, a, b) {
+  ligne.setAttribute('x1', a.c + .5);
+  ligne.setAttribute('y1', a.l + .5);
+  // Un trait de longueur nulle ne se dessine pas partout : on le décale d'un cheveu.
+  ligne.setAttribute('x2', b.c + .5 + (memeCase(a, b) ? .001 : 0));
+  ligne.setAttribute('y2', b.l + .5);
+}
+
+function dessinerSelection(a, b) {
+  tracer(selection, a, b);
+  selection.classList.remove('ratee');
+  selection.classList.add('visible');
+  lecture.textContent = lettresEntre(a, b);
+}
+
+function effacerSelection() {
+  ancre = null;
+  selection.classList.remove('visible', 'ratee');
+  lecture.textContent = '—';
+}
+
+function essayer(a, b) {
+  const texte = lettresEntre(a, b);
+  const envers = [...texte].reverse().join('');
+  const i = CLES.findIndex((mot, k) => !partie.trouves.has(k) && (mot === texte || mot === envers));
+  ancre = null;
+  if (i < 0) {
+    dessinerSelection(a, b);
+    selection.classList.add('ratee');
+    return;
+  }
+  const p = partie.places[i];
+  const couleur = `var(--fluo-${partie.trouves.size % NB_COULEURS + 1})`;
+  partie.trouves.add(i);
+
+  const ligne = document.createElementNS(SVG, 'line');
+  tracer(ligne, p, { l: p.l + p.dl * (p.n - 1), c: p.c + p.dc * (p.n - 1) });
+  ligne.setAttribute('pathLength', 1);
+  ligne.setAttribute('class', 'trait');
+  ligne.style.stroke = couleur;
+  traits.append(ligne);
+
+  const li = listeMots.children[i];
+  li.classList.add('trouve');
+  li.style.setProperty('--c', couleur);
+
+  selection.classList.remove('visible', 'ratee');
+  lecture.textContent = MOTS[i];
+  afficherCompte();
+  if (partie.trouves.size === MOTS.length) terminer(true);
+}
+
+// Appui simple : pose le début du mot, puis l'appui suivant pose la fin.
+function appuyer(ici) {
+  if (!ancre) {
+    ancre = ici;
+    dessinerSelection(ici, ici);
+  } else if (memeCase(ancre, ici)) {
+    effacerSelection();
+  } else {
+    essayer(ancre, aligner(ancre, ici));
+  }
+}
+
+selection.addEventListener('animationend', () => {
+  selection.classList.remove('visible', 'ratee');
+  if (!ancre && !glisse) lecture.textContent = '—';
+});
+
+grille.addEventListener('pointerdown', e => {
+  if (phase !== 'jeu' || (e.pointerType === 'mouse' && e.button !== 0)) return;
+  e.preventDefault();
+  grille.setPointerCapture(e.pointerId);
+  const ici = caseSous(e);
+  glisse = { id: e.pointerId, debut: ici, fin: ici, bouge: false };
+  if (!ancre) dessinerSelection(ici, ici);
+});
+
+grille.addEventListener('pointermove', e => {
+  if (!glisse || e.pointerId !== glisse.id) return;
+  const fin = aligner(glisse.debut, caseSous(e));
+  if (memeCase(fin, glisse.fin)) return;
+  glisse.fin = fin;
+  glisse.bouge = true;
+  ancre = null;
+  dessinerSelection(glisse.debut, fin);
+});
+
+grille.addEventListener('pointerup', e => {
+  if (!glisse || e.pointerId !== glisse.id) return;
+  const { debut, fin, bouge } = glisse;
+  glisse = null;
+  if (phase !== 'jeu') return;
+  if (bouge && !memeCase(debut, fin)) essayer(debut, fin);
+  else if (bouge) { ancre = null; appuyer(debut); }
+  else appuyer(debut);
+});
+
+grille.addEventListener('pointercancel', () => {
+  glisse = null;
+  effacerSelection();
+});
+
+function montrerCurseur() {
+  grille.querySelector('.curseur')?.classList.remove('curseur');
+  cases[curseur.l * TAILLE + curseur.c].classList.add('curseur');
+}
+
+grille.addEventListener('keydown', e => {
+  if (phase !== 'jeu') return;
+  const pas = { ArrowUp: [-1, 0], ArrowDown: [1, 0], ArrowLeft: [0, -1], ArrowRight: [0, 1] }[e.key];
+  if (pas) {
+    e.preventDefault();
+    curseur = { l: borne(curseur.l + pas[0]), c: borne(curseur.c + pas[1]) };
+    montrerCurseur();
+    if (ancre) dessinerSelection(ancre, aligner(ancre, curseur));
+  } else if (e.key === 'Enter' || e.key === ' ') {
+    e.preventDefault();
+    appuyer({ ...curseur });
+  } else if (e.key === 'Escape') {
+    effacerSelection();
+  }
+});
+
+/* ---------- Boutons ---------- */
+
+$('commencer').addEventListener('click', () => {
+  demarrer();
+  montrerCurseur();
+});
+
+bilan.addEventListener('cancel', e => e.preventDefault());
+$('bilan-suite').addEventListener('click', () => { bilan.close(); demarrer(); });
+$('bilan-pause').addEventListener('click', () => { bilan.close(); attendre(); });
+
+function demanderRaz(ouvert) {
+  $('raz').hidden = ouvert;
+  $('raz-question').hidden = $('raz-oui').hidden = $('raz-non').hidden = !ouvert;
+}
+$('raz').addEventListener('click', () => demanderRaz(true));
+$('raz-non').addEventListener('click', () => demanderRaz(false));
+$('raz-oui').addEventListener('click', () => {
+  progres = { debloques: 0, record: null };
+  ecrireProgres();
+  afficherIndices();
+  if (phase === 'attente') afficherDepart();
+  demanderRaz(false);
+});
+
+afficherIndices();
+attendre();
+</script>
+</body>
+</html>
