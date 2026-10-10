@@ -578,6 +578,7 @@ const PHOTO_PERDU = { src: 'photos/perdu.webp', cadrage: '50% 54%', legende: 'Sn
 const TAILLE = 15;        // grille de 15 × 15
 const DUREE = 7 * 60;     // chrono, en secondes
 const CLE_SAUVEGARDE = 'pouniflu-mots-meles';
+const CODE_DEBUG = '04102001';   // tapé au clavier, débloque tous les indices sans jouer
 
 /* ---------- Fabrication de la grille ---------- */
 
@@ -1067,6 +1068,22 @@ $('photo-entete').addEventListener('click', e => {
 $('zoom-fermer').addEventListener('click', () => zoom.close());
 // Un clic à côté de la photo la referme aussi.
 zoom.addEventListener('click', e => { if (e.target === zoom) zoom.close(); });
+
+// Code de debug. On lit d'abord la touche physique : sur un clavier AZERTY, les chiffres du
+// haut comptent avec ou sans Maj, et le pavé numérique aussi. À défaut, le caractère tapé.
+let frappe = '';
+document.addEventListener('keydown', e => {
+  const chiffre = /^(?:Digit|Numpad)(\d)$/.exec(e.code)?.[1] ?? (/^\d$/.test(e.key) ? e.key : null);
+  if (!chiffre) return;
+  frappe = (frappe + chiffre).slice(-CODE_DEBUG.length);
+  if (frappe !== CODE_DEBUG) return;
+  frappe = '';
+  progres.debloques = INDICES.length;
+  ecrireProgres();
+  afficherIndices();
+  if (phase === 'attente') afficherDepart();
+  listeIndices.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+});
 
 function demanderRaz(ouvert) {
   $('raz').hidden = ouvert;
