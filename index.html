@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Mots mêlés Pouniflu</title>
-<meta name="description" content="Une grille de mots mêlés chronométrée : chaque grille terminée débloque un indice.">
+<title>Les 25 ans de Claire</title>
+<meta name="description" content="Les mots mêlés d'anniversaire de Claire : chaque grille terminée débloque un indice et une photo.">
 <meta name="theme-color" content="#f8fafd">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%23fff'/%3E%3Cpath d='M8 23 24 9' stroke='%23ffe838' stroke-width='10' stroke-linecap='round'/%3E%3Ctext x='16' y='22' font-family='monospace' font-weight='700' font-size='17' text-anchor='middle' fill='%231a2b6d'%3EM%3C/text%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -13,7 +13,7 @@
 <style>
   :root {
     /* Une page de cahier à petits carreaux : la grille à gauche, la marge rouge à droite
-       pour les mots et les indices. La seule couleur vient des surligneurs fluo. */
+       pour les mots et les indices, des polaroïds scotchés. La couleur vient des surligneurs fluo. */
     --papier: #f8fafd;
     --carreau: #e4ebf7;
     --feuille: #ffffff;
@@ -21,6 +21,7 @@
     --encre: #1a2b6d;
     --encre-douce: #5d6b96;
     --rouge: #e03149;
+    --pellicule: #33427c;
     --fluo-1: #ffe838;
     --fluo-2: #ff93c9;
     --fluo-3: #9df06e;
@@ -61,8 +62,16 @@
     padding-block: clamp(20px, 4vw, 40px) 64px;
   }
 
-  /* En-tête */
-  .entete { display: flex; flex-direction: column; gap: 10px; }
+  /* En-tête : le titre, et une photo scotchée à côté */
+  .entete {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 14px 16px;
+    align-items: start;
+  }
+  .entete-texte { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+  .entete .polaroid { --penche: 3deg; width: clamp(104px, 28vw, 150px); margin-top: 8px; }
+  .entete .legende { font-size: 1.15rem; }
   .surtitre {
     font-family: var(--mono);
     font-size: .68rem;
@@ -73,7 +82,7 @@
   }
   h1 {
     font-weight: 800;
-    font-size: clamp(2.4rem, 8vw, 4.4rem);
+    font-size: clamp(2.2rem, 9.4vw, 3.6rem);
     line-height: .95;
     letter-spacing: -.035em;
     text-wrap: balance;
@@ -83,7 +92,8 @@
     padding-inline: .1em;
     margin-inline: -.1em;
   }
-  .consigne { max-width: 56ch; }
+  h1 .soude { white-space: nowrap; }
+  .consigne { grid-column: 1 / -1; max-width: 56ch; }
 
   /* Une colonne sur téléphone ; sur grand écran, la grille à gauche et tout le reste dans la marge */
   .plan {
@@ -270,34 +280,71 @@
   }
   .note { font-size: .86rem; color: var(--encre-douce); }
 
-  .liste-indices { display: flex; flex-direction: column; counter-reset: indice; }
-  .liste-indices li {
-    counter-increment: indice;
+  /* Polaroïds : la photo d'en-tête, les indices, le bilan */
+  .polaroid {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    width: 100%;
+    margin: 0;
+    padding: 7px 7px 8px;
+    border: 1px solid var(--ligne);
+    border-radius: 2px;
+    background: var(--feuille);
+    box-shadow: 0 3px 10px rgba(26, 43, 109, .16);
+    text-align: left;
+    rotate: var(--penche, 0deg);
+  }
+  /* Le bout de ruban adhésif */
+  .polaroid::before {
+    content: "";
+    position: absolute;
+    top: -9px;
+    left: 50%;
+    width: 44%;
+    max-width: 64px;
+    height: 17px;
+    translate: -50% 0;
+    rotate: -3deg;
+    background: var(--ruban, var(--fluo-1));
+    opacity: .85;
+  }
+  button.polaroid { cursor: zoom-in; transition: rotate .2s ease, scale .2s ease; }
+  button.polaroid:hover { rotate: 0deg; scale: 1.03; }
+  .vue {
+    position: relative;
     display: grid;
-    grid-template-columns: 2ch minmax(0, 1fr);
-    column-gap: 12px;
-    align-items: baseline;
-    min-height: 44px;
-    padding-block: 8px 6px;
-    border-bottom: 1px solid var(--ligne);
-  }
-  .liste-indices li::before {
-    content: counter(indice);
+    place-items: center;
+    aspect-ratio: 1;
+    overflow: hidden;
+    background: var(--pellicule);
+    color: var(--carreau);
     font-family: var(--mono);
-    font-size: .72rem;
-    font-weight: 600;
-    color: var(--encre-douce);
+    font-weight: 700;
+    font-size: 1.5rem;
   }
-  .indice-texte {
-    justify-self: start;
+  .vue img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+  .legende {
     font-family: var(--main);
     font-weight: 600;
-    font-size: 1.7rem;
+    font-size: 1.3rem;
     line-height: 1.05;
-    padding-inline: 6px;
-    margin-inline: -6px;
-    background: linear-gradient(transparent 22%, var(--fluo-1) 22% 88%, transparent 88%);
   }
+  .polaroid.verrouille { box-shadow: none; }
+  .polaroid.verrouille::before { opacity: .45; }
+
+  .liste-indices { display: flex; flex-wrap: wrap; justify-content: center; gap: 26px 16px; padding-top: 10px; }
+  .liste-indices li { width: calc((100% - 16px) / 2); max-width: 170px; }
+  .liste-indices li:nth-child(odd) { --penche: -1.6deg; }
+  .liste-indices li:nth-child(even) { --penche: 1.3deg; }
+  .liste-indices li:nth-child(3n) { --penche: .5deg; }
+  .liste-indices li:nth-child(6n + 2) { --ruban: var(--fluo-2); }
+  .liste-indices li:nth-child(6n + 3) { --ruban: var(--fluo-3); }
+  .liste-indices li:nth-child(6n + 4) { --ruban: var(--fluo-4); }
+  .liste-indices li:nth-child(6n + 5) { --ruban: var(--fluo-5); }
+  .liste-indices li:nth-child(6n) { --ruban: var(--fluo-6); }
+  .liste-indices .polaroid > :last-child { min-height: 44px; }
   .verrou {
     font-family: var(--mono);
     font-size: .68rem;
@@ -322,16 +369,32 @@
   dialog::backdrop { background: rgba(26, 43, 109, .42); }
   dialog[open] { display: flex; flex-direction: column; gap: 12px; animation: poser .3s ease-out; }
   dialog h2 { font-size: clamp(1.7rem, 6vw, 2.2rem); letter-spacing: -.02em; text-wrap: balance; }
-  .indice-gagne {
-    align-self: flex-start;
-    font-family: var(--main);
-    font-weight: 600;
-    font-size: clamp(2.2rem, 9vw, 3rem);
-    line-height: 1.05;
-    padding-inline: 10px;
-    margin-inline: -10px;
-    background: linear-gradient(transparent 20%, var(--fluo-1) 20% 88%, transparent 88%);
+  .polaroid-bilan { --penche: -2deg; align-self: flex-start; width: min(220px, 72%); margin: 12px 0 6px 4px; }
+  .polaroid-bilan .legende { font-size: 1.9rem; }
+  .polaroid-bilan img { animation: developper 1.6s ease-out; }
+  @keyframes developper { from { filter: brightness(.2) contrast(.5) saturate(0); } }
+
+  /* Photo en grand */
+  dialog.zoom {
+    width: fit-content;
+    max-width: calc(100vw - 32px);
+    padding: 14px;
+    border: 0;
+    background: none;
+    box-shadow: none;
+    align-items: center;
+    gap: 16px;
+    overflow: visible;
   }
+  .polaroid-zoom { width: auto; padding: 10px 10px 12px; }
+  .polaroid-zoom img {
+    display: block;
+    max-width: calc(100vw - 84px);
+    max-height: 68vh;
+    max-height: 68dvh;
+  }
+  .polaroid-zoom .legende { font-size: 1.8rem; }
+  .zoom .bouton { background: var(--feuille); color: var(--encre); }
   .actions { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 22px; margin-top: 8px; }
   @keyframes poser { from { opacity: 0; transform: translateY(10px) rotate(-.6deg); } }
 
@@ -357,11 +420,16 @@
       grid-row: 1 / span 2;
       --cote: clamp(420px, calc(100vh - 150px), 640px);
       --cote: clamp(420px, calc(100dvh - 150px), 640px);
+      /* …et elle reste en vue quand on fait défiler la marge. */
+      position: sticky;
+      top: 16px;
+      align-self: start;
     }
     .entete, .marge { grid-column: 2; border-left: 2px solid var(--rouge); padding-left: 28px; }
     .entete { grid-row: 1; padding-bottom: 32px; }
+    .entete .polaroid { width: 112px; }
     .marge { grid-row: 2; }
-    h1 { font-size: 4rem; }
+    h1 { font-size: 2.8rem; }
     .liste-mots { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
   }
 
@@ -375,9 +443,15 @@
   <div class="plan">
 
     <header class="entete">
-      <p class="surtitre">Cahier de jeux</p>
-      <h1>Mots <span class="fluo">mêlés</span></h1>
-      <p class="consigne">Les mots se cachent dans tous les sens : à l'endroit, à l'envers, en diagonale. Finis la grille avant la fin du chrono et tu gagnes un indice.</p>
+      <div class="entete-texte">
+        <p class="surtitre">Mots mêlés d'anniversaire</p>
+        <h1>Joyeux <span class="soude">25 ans,</span> <span class="fluo">Claire</span></h1>
+      </div>
+      <button class="polaroid" id="photo-entete" type="button">
+        <span class="vue"><img src="photos/entete.webp" alt="Photo de groupe : trois personnes en maillot d'équipe prennent la pose" style="object-position: 50% 22%"></span>
+        <span class="legende">25 ans !</span>
+      </button>
+      <p class="consigne">Les mots se cachent dans tous les sens : à l'endroit, à l'envers, en diagonale. Chaque grille finie avant la fin du chrono te donne un indice et développe une photo.</p>
     </header>
 
     <section class="colonne-grille" aria-label="Grille">
@@ -446,12 +520,23 @@
 <dialog id="bilan" aria-labelledby="bilan-titre">
   <p class="surtitre" id="bilan-surtitre"></p>
   <h2 id="bilan-titre"></h2>
-  <p class="indice-gagne" id="bilan-indice" hidden></p>
+  <figure class="polaroid polaroid-bilan" id="bilan-photo" hidden>
+    <span class="vue"><img id="bilan-image" alt=""></span>
+    <figcaption class="legende" id="bilan-legende"></figcaption>
+  </figure>
   <p id="bilan-texte"></p>
   <div class="actions">
     <button class="bouton" id="bilan-suite" type="button"></button>
     <button class="lien" id="bilan-pause" type="button"></button>
   </div>
+</dialog>
+
+<dialog id="zoom" class="zoom" aria-label="Photo en grand">
+  <figure class="polaroid polaroid-zoom">
+    <img id="zoom-image" alt="">
+    <figcaption class="legende" id="zoom-legende"></figcaption>
+  </figure>
+  <button class="bouton" id="zoom-fermer" type="button">Fermer</button>
 </dialog>
 
 <script>
@@ -475,6 +560,20 @@ const INDICES = [
   'héros mystère',
   'pioupiou',
 ];
+
+// La photo qui se développe avec chaque indice, dans le même ordre.
+// cadrage : le point de la photo gardé au centre de la vignette carrée.
+const PHOTOS = [
+  { src: 'photos/indice-1.webp', cadrage: '62% 38%' },
+  { src: 'photos/indice-2.webp', cadrage: '50% 55%' },
+  { src: 'photos/indice-3.webp', cadrage: '50% 30%' },
+  { src: 'photos/indice-4.webp', cadrage: '50% 100%' },
+  { src: 'photos/indice-5.webp', cadrage: '50% 45%' },
+  { src: 'photos/indice-6.webp', cadrage: '18% 50%' },
+  { src: 'photos/indice-7.webp', cadrage: '50% 80%' },
+];
+// Celle du bilan quand le chrono tombe à zéro.
+const PHOTO_PERDU = { src: 'photos/perdu.webp', cadrage: '50% 54%', legende: 'Snif.' };
 
 const TAILLE = 15;        // grille de 15 × 15
 const DUREE = 7 * 60;     // chrono, en secondes
@@ -604,7 +703,7 @@ const $ = id => document.getElementById(id);
 const grille = $('grille'), calque = $('calque'), traits = $('traits'), selection = $('selection');
 const barre = $('barre'), chrono = $('chrono'), jauge = $('jauge'), compte = $('compte'), lecture = $('lecture');
 const depart = $('depart'), listeMots = $('liste-mots'), listeIndices = $('liste-indices');
-const bilan = $('bilan');
+const bilan = $('bilan'), zoom = $('zoom');
 
 const NB_COULEURS = 6;
 const SVG = 'http://www.w3.org/2000/svg';
@@ -647,21 +746,55 @@ function afficherCompte() {
   compte.textContent = `${partie ? partie.trouves.size : 0}/${MOTS.length}`;
 }
 
+function cadrer(img, photo, alt) {
+  img.src = photo.src;
+  img.alt = alt;
+  img.style.objectPosition = photo.cadrage;
+}
+
+function agrandir(src, alt, legende) {
+  $('zoom-image').src = src;
+  $('zoom-image').alt = alt;
+  $('zoom-legende').textContent = legende;
+  zoom.showModal();
+}
+
+// Chaque indice est un polaroïd : pas encore développé tant que sa grille n'est pas finie.
 function afficherIndices() {
   $('compte-indices').textContent = `${progres.debloques}/${INDICES.length}`;
   listeIndices.replaceChildren(...INDICES.map((texte, i) => {
     const li = document.createElement('li');
-    const span = document.createElement('span');
-    if (i < progres.debloques) {
-      span.className = 'indice-texte';
-      span.textContent = texte;
+    const ouvert = i < progres.debloques;
+    const carte = document.createElement(ouvert ? 'button' : 'div');
+    const vue = document.createElement('span');
+    const legende = document.createElement('span');
+    carte.className = 'polaroid';
+    vue.className = 'vue';
+    if (ouvert) {
+      const img = document.createElement('img');
+      const alt = `Photo de l'indice n° ${i + 1}`;
+      cadrer(img, PHOTOS[i], alt);
+      vue.append(img);
+      legende.className = 'legende';
+      legende.textContent = texte;
+      carte.type = 'button';
+      carte.addEventListener('click', () => agrandir(PHOTOS[i].src, alt, texte));
     } else {
-      span.className = 'verrou';
-      span.textContent = i === progres.debloques ? 'Prochaine grille finie' : 'Verrouillé';
+      carte.classList.add('verrouille');
+      vue.textContent = i + 1;
+      legende.className = 'verrou';
+      legende.textContent = i === progres.debloques ? 'Prochaine grille finie' : 'Verrouillé';
     }
-    li.append(span);
+    carte.append(vue, legende);
+    li.append(carte);
     return li;
   }));
+}
+
+function montrerPhotoBilan(photo, legende, alt) {
+  cadrer($('bilan-image'), photo, alt);
+  $('bilan-legende').textContent = legende;
+  $('bilan-photo').hidden = false;
 }
 
 function afficherDepart() {
@@ -699,6 +832,8 @@ function attendre() {
 function demarrer() {
   const { lettres, places } = genererGrille();
   partie = { lettres, places, trouves: new Set(), fin: Date.now() + DUREE * 1000 };
+  // Charge d'avance les photos du bilan, pour qu'elles soient là dès qu'il s'ouvre.
+  for (const photo of [PHOTOS[progres.debloques], PHOTO_PERDU]) if (photo) new Image().src = photo.src;
   viderGrille();
   cases.forEach((el, i) => { el.textContent = lettres[Math.floor(i / TAILLE)][i % TAILLE]; });
   phase = 'jeu';
@@ -719,8 +854,7 @@ function terminer(gagne) {
   phase = 'fini';
   glisse = null;
   barre.classList.remove('urgent');
-  const indice = $('bilan-indice');
-  indice.hidden = true;
+  $('bilan-photo').hidden = true;
 
   if (!gagne) {
     effacerSelection();
@@ -730,6 +864,7 @@ function terminer(gagne) {
     $('bilan-texte').textContent = `Pas trouvé : ${manquants.join(', ')}. Pas d'indice cette fois, et la prochaine grille sera mélangée autrement.`;
     $('bilan-suite').textContent = 'Réessayer';
     $('bilan-pause').textContent = 'Faire une pause';
+    montrerPhotoBilan(PHOTO_PERDU, PHOTO_PERDU.legende, 'Selfie avec des larmes dessinées');
     bilan.showModal();
     return;
   }
@@ -744,9 +879,9 @@ function terminer(gagne) {
   const restantes = INDICES.length - progres.debloques;
   $('bilan-surtitre').textContent = `Grille finie en ${duree(Math.round(temps / 1000))}`;
   if (nouveau) {
-    $('bilan-titre').textContent = `Indice n° ${progres.debloques}`;
-    indice.textContent = INDICES[progres.debloques - 1];
-    indice.hidden = false;
+    const n = progres.debloques;
+    $('bilan-titre').textContent = `Indice n° ${n}`;
+    montrerPhotoBilan(PHOTOS[n - 1], INDICES[n - 1], `Photo de l'indice n° ${n}`);
     $('bilan-texte').textContent = restantes
       ? `Encore ${pluriel(restantes, 'grille')} pour tout débloquer.`
       : `C'était le dernier. Les ${INDICES.length} indices sont à toi.`;
@@ -924,6 +1059,14 @@ $('commencer').addEventListener('click', () => {
 bilan.addEventListener('cancel', e => e.preventDefault());
 $('bilan-suite').addEventListener('click', () => { bilan.close(); demarrer(); });
 $('bilan-pause').addEventListener('click', () => { bilan.close(); attendre(); });
+
+$('photo-entete').addEventListener('click', e => {
+  const img = e.currentTarget.querySelector('img');
+  agrandir(img.src, img.alt, '25 ans !');
+});
+$('zoom-fermer').addEventListener('click', () => zoom.close());
+// Un clic à côté de la photo la referme aussi.
+zoom.addEventListener('click', e => { if (e.target === zoom) zoom.close(); });
 
 function demanderRaz(ouvert) {
   $('raz').hidden = ouvert;
